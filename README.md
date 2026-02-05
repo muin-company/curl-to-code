@@ -1,46 +1,83 @@
-# cURL to Code 🔄
+# cURL to Code
 
-Convert cURL commands to code in **Python, JavaScript, Go, PHP, Ruby, and Node.js** instantly.
+Convert cURL commands to Python, JavaScript, Go, PHP, Ruby, Node.js instantly.
 
 [![Live Demo](https://img.shields.io/badge/demo-live-success)](https://curl2code.com)
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/muinmomin/curl-to-code.svg?style=social)](https://github.com/muinmomin/curl-to-code)
 
-## 🚀 Features
+## What is this?
 
-- **6 Programming Languages** - Python, JavaScript, Node.js, Go, PHP, Ruby
-- **Zero Dependencies** - Single HTML file, works offline
-- **Full cURL Parsing** - Handles headers, data, auth, cookies, methods
-- **One-Click Copy** - Copy generated code to clipboard instantly
-- **Live Conversion** - Real-time code generation as you type
-- **Mobile Responsive** - Works on any device
-- **SEO Optimized** - Built for discoverability
-- **Developer-Friendly UI** - Clean, dark theme optimized for developers
+Paste a cURL command, get working code in your language. That's it.
 
-## 📖 Usage
+## Why use this?
 
-### Online
-Visit [curl2code.com](https://curl2code.com) (or your deployed URL)
-
-### Local
+**Before:**
 ```bash
-# Clone the repo
-git clone https://github.com/yourusername/curl-to-code.git
-cd curl-to-code
+# API docs give you this:
+curl -X POST https://api.example.com/users \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer token123' \
+  -d '{"name":"John","email":"john@example.com"}'
 
-# Open in browser
+# You need Python code
+# You manually translate:
+# - How do I set headers in requests?
+# - Is it json= or data=?
+# - Do I need to JSON.stringify the body?
+# ...15 minutes of docs reading...
+```
+
+**After:**
+```
+1. Paste cURL command
+2. Click "Python"
+3. Copy working code
+4. Run it
+```
+
+**Real pain points:**
+- API documentation only provides cURL examples
+- Each language has different HTTP client syntax
+- Easy to mess up headers, auth, or body formatting
+- Postman is too heavy for quick conversions
+- Manual translation is error-prone
+
+This tool does one thing: turn cURL into code, instantly.
+
+## Features
+
+- **6 Languages** - Python, JavaScript, Go, PHP, Ruby, Node.js
+- **Zero Dependencies** - Single HTML file, works offline
+- **Full Parsing** - Headers, data, auth, cookies, methods, query params
+- **One-Click Copy** - Clipboard integration
+- **Live Conversion** - Real-time as you type
+- **Mobile Responsive** - Works on phones/tablets
+- **Clean UI** - Dark theme optimized for developers
+
+## Usage
+
+**Online:** Visit [curl2code.com](https://curl2code.com) (or your deployed URL)
+
+**Local:**
+```bash
+git clone https://github.com/muinmomin/curl-to-code.git
+cd curl-to-code
 open index.html
 ```
 
-That's it! No build process, no dependencies.
+No build process, no npm install. Just open and use.
 
-## 🎯 Examples
+## Examples
 
 ### Simple GET Request
+
+**Input:**
 ```bash
 curl https://api.example.com/users
 ```
 
-**→ Python:**
+**Python:**
 ```python
 import requests
 
@@ -52,48 +89,54 @@ print(response.status_code)
 print(response.text)
 ```
 
-### POST with JSON
+**JavaScript (fetch):**
+```javascript
+const url = 'https://api.example.com/users';
+
+fetch(url)
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+### POST with JSON Body
+
+**Input:**
 ```bash
 curl -X POST https://api.example.com/users \
   -H 'Content-Type: application/json' \
   -d '{"name":"John Doe","email":"john@example.com"}'
 ```
 
-**→ JavaScript:**
-```javascript
-const url = 'https://api.example.com/users';
+**Python:**
+```python
+import requests
 
-const options = {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: '{"name":"John Doe","email":"john@example.com"}'
-};
+url = 'https://api.example.com/users'
 
-fetch(url, options)
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.error('Error:', error));
+headers = {
+    'Content-Type': 'application/json'
+}
+
+data = '{"name":"John Doe","email":"john@example.com"}'
+
+response = requests.post(url, headers=headers, data=data)
+
+print(response.status_code)
+print(response.json())
 ```
 
-### With Authentication
-```bash
-curl -X GET https://api.example.com/protected \
-  -u username:password
-```
-
-**→ Node.js:**
+**Node.js (axios):**
 ```javascript
 const axios = require('axios');
 
 const config = {
-  method: "get",
-  url: "https://api.example.com/protected",
-  auth: {
-    username: "username",
-    password: "password"
-  }
+  method: "post",
+  url: "https://api.example.com/users",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  data: '{"name":"John Doe","email":"john@example.com"}'
 };
 
 axios(config)
@@ -105,15 +148,27 @@ axios(config)
   });
 ```
 
-### Custom Headers
+### Authentication
+
+**Input:**
 ```bash
-curl https://api.example.com/data \
-  -H 'User-Agent: MyApp/1.0' \
-  -H 'Accept: application/json' \
-  -H 'X-API-Key: secret123'
+curl -X GET https://api.example.com/protected \
+  -u username:password
 ```
 
-**→ Go:**
+**Python:**
+```python
+import requests
+
+url = 'https://api.example.com/protected'
+
+response = requests.get(url, auth=('username', 'password'))
+
+print(response.status_code)
+print(response.text)
+```
+
+**Go:**
 ```go
 package main
 
@@ -124,12 +179,10 @@ import (
 )
 
 func main() {
-    url := "https://api.example.com/data"
+    url := "https://api.example.com/protected"
     req, _ := http.NewRequest("GET", url, nil)
 
-    req.Header.Add("User-Agent", "MyApp/1.0")
-    req.Header.Add("Accept", "application/json")
-    req.Header.Add("X-API-Key", "secret123")
+    req.SetBasicAuth("username", "password")
 
     res, _ := http.DefaultClient.Do(req)
     defer res.Body.Close()
@@ -140,39 +193,105 @@ func main() {
 }
 ```
 
-## 🔧 Supported cURL Options
+### Custom Headers
+
+**Input:**
+```bash
+curl https://api.example.com/data \
+  -H 'User-Agent: MyApp/1.0' \
+  -H 'Accept: application/json' \
+  -H 'X-API-Key: secret123'
+```
+
+**PHP:**
+```php
+<?php
+
+$url = 'https://api.example.com/data';
+
+$options = [
+    'http' => [
+        'method' => 'GET',
+        'header' => [
+            'User-Agent: MyApp/1.0',
+            'Accept: application/json',
+            'X-API-Key: secret123'
+        ]
+    ]
+];
+
+$context = stream_context_create($options);
+$response = file_get_contents($url, false, $context);
+
+echo $response;
+?>
+```
+
+**Ruby:**
+```ruby
+require 'net/http'
+require 'uri'
+
+uri = URI.parse('https://api.example.com/data')
+http = Net::HTTP.new(uri.host, uri.port)
+http.use_ssl = true
+
+request = Net::HTTP::Get.new(uri.request_uri)
+request['User-Agent'] = 'MyApp/1.0'
+request['Accept'] = 'application/json'
+request['X-API-Key'] = 'secret123'
+
+response = http.request(request)
+
+puts response.code
+puts response.body
+```
+
+## Supported cURL Options
 
 | Option | Description | Status |
 |--------|-------------|--------|
-| `-X, --request` | HTTP method | ✅ |
-| `-H, --header` | Custom headers | ✅ |
-| `-d, --data` | POST data | ✅ |
-| `-u, --user` | Basic authentication | ✅ |
-| `-b, --cookie` | Cookies | ✅ |
-| `-F, --form` | Form data | ✅ |
-| URL with query params | Query strings | ✅ |
+| `-X, --request` | HTTP method (GET, POST, PUT, DELETE, etc.) | Supported |
+| `-H, --header` | Custom headers | Supported |
+| `-d, --data` | POST data (JSON, form data) | Supported |
+| `-u, --user` | Basic authentication | Supported |
+| `-b, --cookie` | Cookies | Supported |
+| `-F, --form` | Multipart form data | Supported |
+| URL with query params | Query strings | Supported |
 
-## 🎨 Tech Stack
+## Tech Stack
 
-- **HTML5** - Semantic, SEO-optimized structure
-- **Vanilla JavaScript** - Zero dependencies, fast and lightweight
-- **CSS3** - Modern, responsive design with dark theme
-- **No Build Process** - Works immediately, no npm/webpack/bundlers
+- Single HTML file
+- Vanilla JavaScript
+- Zero external dependencies
+- No build process
+- ~300 lines of code
 
-## 📂 Project Structure
+Why? Because simple tools should be simple. No need for React/Vue/bundlers for a text converter.
 
+## Development
+
+Want to modify or self-host?
+
+```bash
+# Clone
+git clone https://github.com/muinmomin/curl-to-code.git
+cd curl-to-code
+
+# Open in browser
+open index.html
+
+# Or serve locally
+python -m http.server 8000
+# Visit http://localhost:8000
 ```
-curl-to-code/
-├── index.html          # Complete single-file application
-├── README.md          # This file
-└── LICENSE            # MIT License
-```
 
-## 🚢 Deployment
+All code is in `index.html`. Edit directly, no compilation needed.
+
+## Deployment
 
 ### GitHub Pages
 ```bash
-# Push to GitHub
 git init
 git add .
 git commit -m "Initial commit"
@@ -180,93 +299,99 @@ git branch -M main
 git remote add origin https://github.com/yourusername/curl-to-code.git
 git push -u origin main
 
-# Enable GitHub Pages in repository settings
-# Point to main branch, root directory
+# Enable GitHub Pages in Settings > Pages
+# Source: main branch, root directory
 ```
 
-### Netlify
-```bash
-# Drag and drop the folder to Netlify dashboard
-# Or connect GitHub repo for automatic deployments
-```
-
-### Vercel
-```bash
-vercel --prod
-```
+### Netlify / Vercel
+Drag and drop the folder to their dashboard. Done.
 
 ### Any Static Host
-Just upload `index.html` - it's completely self-contained!
+Upload `index.html` - it's completely self-contained.
 
-## 🎯 SEO Features
+## Contributing
 
-- Semantic HTML5 structure
-- Complete meta tags (description, keywords, author)
-- Open Graph tags for social sharing
-- Twitter Card support
-- Mobile-responsive viewport
-- Fast loading (single file, no external dependencies)
-- Clean URLs (no hash routing)
+Want to improve curl-to-code? Here's how:
 
-## 🤝 Contributing
+**Feature ideas:**
+- Add more languages (Rust, C#, Swift, Kotlin)
+- Support advanced cURL options (--proxy, --max-time, etc.)
+- Add syntax highlighting
+- Export as Postman collection
+- Batch conversion (multiple cURLs)
+- Generate tests (pytest, jest, etc.)
 
-Contributions are welcome! Here's how:
-
+**How to contribute:**
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes to `index.html`
+4. Test with multiple cURL examples
+5. Submit a pull request
 
 ### Adding a New Language
 
-To add support for a new language:
+Example for Rust:
 
-1. Add a button in the language selector:
+1. Add button:
 ```html
 <button class="lang-btn" data-lang="rust">Rust</button>
 ```
 
-2. Add a generator method in the `CodeGenerator` class:
+2. Add generator method:
 ```javascript
 generateRust(parsed) {
-    // Your Rust code generation logic
+    // Generate Rust code using parsed cURL data
     return rustCode;
 }
 ```
 
-3. Register it in the `generate()` method:
+3. Register in generator map:
 ```javascript
 const generators = {
-    // ... existing generators
-    rust: () => this.generateRust(parsed)
+    rust: () => this.generateRust(parsed),
+    // ... other generators
 };
 ```
 
-## 📝 License
-
-MIT License - feel free to use this project for anything!
-
-## 🙏 Acknowledgments
-
-- Built with ❤️ for the developer community
-- Inspired by the need for a simple, fast cURL converter
-- No external libraries = maximum simplicity
-
-## 🐛 Known Issues
+## Known Limitations
 
 - Form file uploads (`-F 'file=@path'`) generate placeholder code
-- Some advanced cURL flags not yet supported
-- Cookie parsing is basic (no file support yet)
+- Some advanced cURL flags not supported yet
+- Cookie parsing is basic (no cookie jar file support)
+- Doesn't validate generated code (assumes valid cURL input)
 
-Pull requests to fix these are welcome!
+Pull requests to address these are welcome!
 
-## 📮 Contact
+## Browser Support
 
-- Website: [curl2code.com](https://curl2code.com)
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Twitter: [@yourhandle](https://twitter.com/yourhandle)
+Works in all modern browsers:
+- Chrome/Edge (latest)
+- Firefox (latest)
+- Safari (latest)
+- Mobile browsers
+
+Uses ES6+ features but no build step required.
+
+## Privacy
+
+All processing happens client-side in your browser. No data is sent to any server. No analytics, no tracking.
+
+## SEO
+
+Optimized for:
+- curl to python
+- curl to javascript
+- curl to code converter
+- convert curl to requests
+- curl command converter
+- api request code generator
+
+## License
+
+MIT - Use it however you want.
 
 ---
 
-**Star ⭐ this repo if you find it useful!**
+Made by [muin](https://github.com/muinmomin)
+
+*Stop manually translating cURL commands. Convert, copy, run.*
