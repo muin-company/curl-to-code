@@ -70,102 +70,30 @@ No build process, no npm install. Just open and use.
 
 ## Examples
 
-### Simple GET Request
+### Example 1: Simple GET request
 
 **Input:**
 ```bash
 curl https://api.example.com/users
 ```
 
-**Python:**
+**Python (requests):**
 ```python
 import requests
 
 url = 'https://api.example.com/users'
-
 response = requests.get(url)
-
-print(response.status_code)
-print(response.text)
-```
-
-**JavaScript (fetch):**
-```javascript
-const url = 'https://api.example.com/users';
-
-fetch(url)
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.error('Error:', error));
-```
-
-### POST with JSON Body
-
-**Input:**
-```bash
-curl -X POST https://api.example.com/users \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"John Doe","email":"john@example.com"}'
-```
-
-**Python:**
-```python
-import requests
-
-url = 'https://api.example.com/users'
-
-headers = {
-    'Content-Type': 'application/json'
-}
-
-data = '{"name":"John Doe","email":"john@example.com"}'
-
-response = requests.post(url, headers=headers, data=data)
 
 print(response.status_code)
 print(response.json())
 ```
 
-**Node.js (axios):**
+**JavaScript (fetch):**
 ```javascript
-const axios = require('axios');
-
-const config = {
-  method: "post",
-  url: "https://api.example.com/users",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  data: '{"name":"John Doe","email":"john@example.com"}'
-};
-
-axios(config)
-  .then(response => {
-    console.log(JSON.stringify(response.data));
-  })
-  .catch(error => {
-    console.log(error);
-  });
-```
-
-### Authentication
-
-**Input:**
-```bash
-curl -X GET https://api.example.com/protected \
-  -u username:password
-```
-
-**Python:**
-```python
-import requests
-
-url = 'https://api.example.com/protected'
-
-response = requests.get(url, auth=('username', 'password'))
-
-print(response.status_code)
-print(response.text)
+fetch('https://api.example.com/users')
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
 ```
 
 **Go:**
@@ -179,52 +107,160 @@ import (
 )
 
 func main() {
-    url := "https://api.example.com/protected"
-    req, _ := http.NewRequest("GET", url, nil)
-
-    req.SetBasicAuth("username", "password")
-
-    res, _ := http.DefaultClient.Do(req)
-    defer res.Body.Close()
-    body, _ := io.ReadAll(res.Body)
-
-    fmt.Println(res)
+    resp, _ := http.Get("https://api.example.com/users")
+    defer resp.Body.Close()
+    body, _ := io.ReadAll(resp.Body)
     fmt.Println(string(body))
 }
 ```
 
-### Custom Headers
+### Example 2: POST with JSON body
 
 **Input:**
 ```bash
-curl https://api.example.com/data \
-  -H 'User-Agent: MyApp/1.0' \
-  -H 'Accept: application/json' \
-  -H 'X-API-Key: secret123'
+curl -X POST https://api.example.com/users \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"John Doe","email":"john@example.com","age":30}'
+```
+
+**Python:**
+```python
+import requests
+
+url = 'https://api.example.com/users'
+headers = {'Content-Type': 'application/json'}
+data = '{"name":"John Doe","email":"john@example.com","age":30}'
+
+response = requests.post(url, headers=headers, data=data)
+print(response.status_code)
+print(response.json())
+```
+
+**Node.js (axios):**
+```javascript
+const axios = require('axios');
+
+axios.post('https://api.example.com/users', 
+  {"name":"John Doe","email":"john@example.com","age":30},
+  {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }
+)
+.then(response => console.log(response.data))
+.catch(error => console.error(error));
+```
+
+### Example 3: Bearer token authentication
+
+**Input:**
+```bash
+curl https://api.github.com/user/repos \
+  -H 'Authorization: Bearer ghp_xxxxxxxxxxxxxxxxxxxx' \
+  -H 'Accept: application/vnd.github.v3+json'
+```
+
+**Python:**
+```python
+import requests
+
+url = 'https://api.github.com/user/repos'
+headers = {
+    'Authorization': 'Bearer ghp_xxxxxxxxxxxxxxxxxxxx',
+    'Accept': 'application/vnd.github.v3+json'
+}
+
+response = requests.get(url, headers=headers)
+print(response.json())
 ```
 
 **PHP:**
 ```php
 <?php
+$ch = curl_init();
 
-$url = 'https://api.example.com/data';
+curl_setopt($ch, CURLOPT_URL, 'https://api.github.com/user/repos');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer ghp_xxxxxxxxxxxxxxxxxxxx',
+    'Accept: application/vnd.github.v3+json'
+]);
 
-$options = [
-    'http' => [
-        'method' => 'GET',
-        'header' => [
-            'User-Agent: MyApp/1.0',
-            'Accept: application/json',
-            'X-API-Key: secret123'
-        ]
-    ]
-];
+$result = curl_exec($ch);
+curl_close($ch);
 
-$context = stream_context_create($options);
-$response = file_get_contents($url, false, $context);
-
-echo $response;
+echo $result;
 ?>
+```
+
+### Example 4: Form data with file upload
+
+**Input:**
+```bash
+curl -X POST https://api.example.com/upload \
+  -F 'file=@document.pdf' \
+  -F 'title=My Document' \
+  -F 'category=reports'
+```
+
+**Python:**
+```python
+import requests
+
+url = 'https://api.example.com/upload'
+
+files = {'file': open('document.pdf', 'rb')}
+data = {
+    'title': 'My Document',
+    'category': 'reports'
+}
+
+response = requests.post(url, files=files, data=data)
+print(response.status_code)
+```
+
+**JavaScript (using FormData):**
+```javascript
+const formData = new FormData();
+formData.append('file', fileInput.files[0]); // from <input type="file">
+formData.append('title', 'My Document');
+formData.append('category', 'reports');
+
+fetch('https://api.example.com/upload', {
+  method: 'POST',
+  body: formData
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+### Example 5: Query parameters and cookies
+
+**Input:**
+```bash
+curl 'https://api.example.com/search?q=javascript&page=2&limit=50' \
+  -H 'Cookie: session=abc123; user_id=456' \
+  -H 'User-Agent: Mozilla/5.0'
+```
+
+**Python:**
+```python
+import requests
+
+url = 'https://api.example.com/search'
+params = {
+    'q': 'javascript',
+    'page': '2',
+    'limit': '50'
+}
+headers = {
+    'Cookie': 'session=abc123; user_id=456',
+    'User-Agent': 'Mozilla/5.0'
+}
+
+response = requests.get(url, params=params, headers=headers)
+print(response.json())
 ```
 
 **Ruby:**
@@ -232,19 +268,128 @@ echo $response;
 require 'net/http'
 require 'uri'
 
-uri = URI.parse('https://api.example.com/data')
+uri = URI.parse('https://api.example.com/search')
+uri.query = URI.encode_www_form({
+  'q' => 'javascript',
+  'page' => '2',
+  'limit' => '50'
+})
+
 http = Net::HTTP.new(uri.host, uri.port)
 http.use_ssl = true
 
 request = Net::HTTP::Get.new(uri.request_uri)
-request['User-Agent'] = 'MyApp/1.0'
-request['Accept'] = 'application/json'
-request['X-API-Key'] = 'secret123'
+request['Cookie'] = 'session=abc123; user_id=456'
+request['User-Agent'] = 'Mozilla/5.0'
 
 response = http.request(request)
-
-puts response.code
 puts response.body
+```
+
+### Example 6: PUT/PATCH/DELETE operations
+
+**Input:**
+```bash
+curl -X PATCH https://api.example.com/users/123 \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer token123' \
+  -d '{"status":"inactive"}'
+```
+
+**Python:**
+```python
+import requests
+
+url = 'https://api.example.com/users/123'
+headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer token123'
+}
+data = '{"status":"inactive"}'
+
+response = requests.patch(url, headers=headers, data=data)
+print(response.status_code)
+```
+
+**Go:**
+```go
+package main
+
+import (
+    "bytes"
+    "fmt"
+    "net/http"
+    "io"
+)
+
+func main() {
+    url := "https://api.example.com/users/123"
+    payload := []byte(`{"status":"inactive"}`)
+    
+    req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(payload))
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("Authorization", "Bearer token123")
+    
+    client := &http.Client{}
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+    
+    body, _ := io.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}
+```
+
+### Example 7: Complex real-world API call (Stripe)
+
+**Input:**
+```bash
+curl https://api.stripe.com/v1/charges \
+  -u sk_test_xxxxxxxxxxxx: \
+  -d amount=2000 \
+  -d currency=usd \
+  -d source=tok_visa \
+  -d description="Charge for customer@example.com"
+```
+
+**Python:**
+```python
+import requests
+
+url = 'https://api.stripe.com/v1/charges'
+auth = ('sk_test_xxxxxxxxxxxx', '')
+data = {
+    'amount': '2000',
+    'currency': 'usd',
+    'source': 'tok_visa',
+    'description': 'Charge for customer@example.com'
+}
+
+response = requests.post(url, auth=auth, data=data)
+print(response.json())
+```
+
+**Node.js:**
+```javascript
+const axios = require('axios');
+
+const config = {
+  method: 'post',
+  url: 'https://api.stripe.com/v1/charges',
+  auth: {
+    username: 'sk_test_xxxxxxxxxxxx',
+    password: ''
+  },
+  data: new URLSearchParams({
+    amount: '2000',
+    currency: 'usd',
+    source: 'tok_visa',
+    description: 'Charge for customer@example.com'
+  })
+};
+
+axios(config)
+  .then(response => console.log(response.data))
+  .catch(error => console.error(error));
 ```
 
 ## Supported cURL Options
