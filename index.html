@@ -165,7 +165,7 @@
         .copy-btn {
             position: absolute;
             top: 15px;
-            right: 80px;
+            right: 180px;
             padding: 8px 16px;
             background: var(--accent);
             color: white;
@@ -182,6 +182,29 @@
         }
 
         .copy-btn.copied {
+            background: var(--success);
+        }
+
+        .download-btn {
+            position: absolute;
+            top: 15px;
+            right: 90px;
+            padding: 8px 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .download-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .download-btn.downloaded {
             background: var(--success);
         }
 
@@ -342,6 +365,7 @@ curl -X POST https://api.example.com/users \
                 <div class="panel-content">
                     <div class="output-area">
                         <button class="copy-btn" id="copyBtn">Copy</button>
+                        <button class="download-btn" id="downloadBtn">Download</button>
                         <button class="share-btn" id="shareBtn">Share</button>
                         <pre class="output-code" id="output">// Your converted code will appear here...</pre>
                     </div>
@@ -870,6 +894,46 @@ curl -X POST https://api.example.com/users \
             } catch (error) {
                 console.error('Failed to copy:', error);
             }
+        });
+
+        const downloadBtn = document.getElementById('downloadBtn');
+        downloadBtn.addEventListener('click', () => {
+            if (!currentCode || currentCode === '// Your converted code will appear here...') {
+                alert('Please convert a cURL command first!');
+                return;
+            }
+            
+            // Determine file extension based on language
+            const extensions = {
+                'python': '.py',
+                'javascript': '.js',
+                'go': '.go',
+                'php': '.php',
+                'ruby': '.rb',
+                'rust': '.rs'
+            };
+            
+            const extension = extensions[currentLanguage] || '.txt';
+            const filename = 'request' + extension;
+            
+            // Create blob and download
+            const blob = new Blob([currentCode], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Show feedback
+            downloadBtn.textContent = 'Downloaded!';
+            downloadBtn.classList.add('downloaded');
+            setTimeout(() => {
+                downloadBtn.textContent = 'Download';
+                downloadBtn.classList.remove('downloaded');
+            }, 2000);
         });
 
         const shareBtn = document.getElementById('shareBtn');
