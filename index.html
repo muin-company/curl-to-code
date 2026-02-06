@@ -37,6 +37,24 @@
             --accent-hover: #79c0ff;
             --success: #3fb950;
             --code-bg: #161b22;
+            --error-bg: rgba(248, 81, 73, 0.1);
+            --error-text: #f85149;
+            --shadow: rgba(0,0,0,0.3);
+        }
+
+        body.light-mode {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: white;
+            --bg-tertiary: #fafafa;
+            --text-primary: #222;
+            --text-secondary: #666;
+            --border-color: #ddd;
+            --accent: #4a90e2;
+            --accent-hover: #357abd;
+            --code-bg: #fafafa;
+            --error-bg: #fce8e6;
+            --error-text: #d93025;
+            --shadow: rgba(0,0,0,0.1);
         }
 
         body {
@@ -45,6 +63,7 @@
             color: var(--text-primary);
             line-height: 1.6;
             min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
         }
 
         .container {
@@ -57,6 +76,31 @@
             text-align: center;
             padding: 40px 20px;
             border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content {
+            flex: 1;
+            text-align: center;
+        }
+
+        .theme-toggle {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
         }
 
         h1 {
@@ -94,11 +138,67 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .panel-title {
             font-size: 1rem;
             font-weight: 600;
+            position: relative;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 8px;
+            cursor: help;
+        }
+
+        .tooltip-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 12px;
+            line-height: 16px;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 280px;
+            background-color: var(--text-primary);
+            color: var(--bg-primary);
+            text-align: left;
+            border-radius: 6px;
+            padding: 12px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -140px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 13px;
+            line-height: 1.4;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-text kbd {
+            padding: 2px 6px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 11px;
         }
 
         .panel-content {
@@ -117,6 +217,11 @@
             line-height: 1.5;
             resize: vertical;
             outline: none;
+            transition: all 0.2s;
+        }
+
+        textarea:focus {
+            box-shadow: inset 0 0 0 2px var(--accent);
         }
 
         .language-selector {
@@ -160,7 +265,24 @@
             line-height: 1.5;
             overflow-x: auto;
             white-space: pre;
+            color: var(--text-primary);
         }
+
+        /* Syntax highlighting */
+        .output-code .keyword { color: #d73a49; }
+        body:not(.light-mode) .output-code .keyword { color: #ff7b72; }
+        
+        .output-code .string { color: #032f62; }
+        body:not(.light-mode) .output-code .string { color: #a5d6ff; }
+        
+        .output-code .comment { color: #6a737d; }
+        body:not(.light-mode) .output-code .comment { color: #8b949e; }
+        
+        .output-code .function { color: #6f42c1; }
+        body:not(.light-mode) .output-code .function { color: #d2a8ff; }
+        
+        .output-code .number { color: #005cc5; }
+        body:not(.light-mode) .output-code .number { color: #79c0ff; }
 
         .copy-btn {
             position: absolute;
@@ -233,6 +355,22 @@
             border-color: var(--success);
         }
 
+        .clear-btn {
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .clear-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+        }
+
         .examples {
             margin-top: 30px;
             padding: 20px;
@@ -276,13 +414,14 @@
         }
 
         .error {
-            color: #f85149;
-            padding: 10px 20px;
-            background: rgba(248, 81, 73, 0.1);
-            border-left: 3px solid #f85149;
+            color: var(--error-text);
+            padding: 12px 20px;
+            background: var(--error-bg);
+            border-left: 3px solid var(--error-text);
             margin: 10px 20px;
             border-radius: 4px;
             font-size: 14px;
+            font-family: 'Monaco', 'Courier New', monospace;
         }
 
         footer {
@@ -312,34 +451,54 @@
                 font-size: 2rem;
             }
 
+            header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
             .example-grid {
                 grid-template-columns: 1fr;
             }
-        }
 
-        /* Syntax highlighting */
-        .keyword { color: #ff7b72; }
-        .string { color: #a5d6ff; }
-        .comment { color: #8b949e; }
-        .function { color: #d2a8ff; }
-        .number { color: #79c0ff; }
+            .copy-btn, .download-btn, .share-btn {
+                position: static;
+                margin: 10px 5px;
+                display: inline-block;
+            }
+        }
     </style>
 </head>
 <body>
     <header>
-        <div class="container">
+        <div style="width: 120px;"></div>
+        <div class="container header-content">
             <h1>cURL to Code</h1>
             <p class="subtitle">Convert cURL commands to code in Python, JavaScript, Go, PHP, Ruby, Java, Rust, and more</p>
         </div>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">☀️ Light</button>
     </header>
 
     <div class="container">
         <div class="main-content">
             <div class="panel">
                 <div class="panel-header">
-                    <span class="panel-title">cURL Command</span>
+                    <span class="panel-title">
+                        cURL Command
+                        <span class="tooltip">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">
+                                <strong>Keyboard Shortcuts:</strong><br>
+                                <kbd>Ctrl+Enter</kbd> Convert/Generate<br>
+                                <kbd>Ctrl+S</kbd> Download result<br>
+                                <kbd>Ctrl+Shift+C</kbd> Copy to clipboard<br>
+                                <kbd>Ctrl+L</kbd> Clear input
+                            </span>
+                        </span>
+                    </span>
+                    <button class="clear-btn" id="clearBtn" title="Clear input (Ctrl+L)">Clear</button>
                 </div>
                 <div class="panel-content">
+                    <div id="errorMsg"></div>
                     <textarea id="curlInput" placeholder="Paste your cURL command here...
 Example:
 curl -X POST https://api.example.com/users \
@@ -409,7 +568,8 @@ curl -X POST https://api.example.com/users \
         <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">
             💡 Keyboard shortcuts: <kbd style="padding: 2px 6px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px;">Ctrl+Enter</kbd> to convert | 
             <kbd style="padding: 2px 6px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px;">Ctrl+S</kbd> to download | 
-            <kbd style="padding: 2px 6px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px;">Ctrl+Shift+C</kbd> to copy
+            <kbd style="padding: 2px 6px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px;">Ctrl+Shift+C</kbd> to copy |
+            <kbd style="padding: 2px 6px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px;">Ctrl+L</kbd> to clear
         </p>
     </footer>
 
@@ -456,8 +616,7 @@ curl -X POST https://api.example.com/users \
                     .replace(/\\\n/g, ' ')
                     .replace(/\s+/g, ' ');
 
-                // Extract URL (first non-flag argument or after explicit URL flags)
-                // Match URLs more specifically - must start with http/https or be quoted
+                // Extract URL
                 const urlMatch = cmd.match(/(?:--url\s+)?(['"]?)(https?:\/\/[^\s'"]+)\1/) || 
                                 cmd.match(/\s(['"])(https?:\/\/[^'"]+)\1/) ||
                                 cmd.match(/\s(https?:\/\/\S+)/);
@@ -470,8 +629,10 @@ curl -X POST https://api.example.com/users \
                             result.query[key] = value;
                         });
                     } catch (e) {
-                        // Invalid URL, ignore query params
+                        // Invalid URL, will be caught in validation
                     }
+                } else {
+                    throw new Error('Could not parse URL from cURL command. Make sure your command includes a valid http:// or https:// URL.');
                 }
 
                 // Extract method
@@ -851,15 +1012,85 @@ curl -X POST https://api.example.com/users \
 
         const curlInput = document.getElementById('curlInput');
         const output = document.getElementById('output');
+        const errorMsg = document.getElementById('errorMsg');
         const copyBtn = document.getElementById('copyBtn');
         const langBtns = document.querySelectorAll('.lang-btn');
         const exampleBtns = document.querySelectorAll('.example-btn');
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('curl-to-code-theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            themeToggle.textContent = '🌙 Dark';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            themeToggle.textContent = isLight ? '🌙 Dark' : '☀️ Light';
+            localStorage.setItem('curl-to-code-theme', isLight ? 'light' : 'dark');
+        });
+
+        function syntaxHighlight(code, language) {
+            // Basic syntax highlighting based on language
+            let highlighted = code;
+            
+            if (language === 'python') {
+                highlighted = code
+                    .replace(/\b(import|from|def|class|if|else|elif|for|while|return|try|except|with|as)\b/g, '<span class="keyword">$1</span>')
+                    .replace(/\b(requests|print|json|datetime)\b/g, '<span class="function">$1</span>')
+                    .replace(/(#.*$)/gm, '<span class="comment">$1</span>')
+                    .replace(/('([^'\\]|\\.)*'|"([^"\\]|\\.)*")/g, '<span class="string">$1</span>')
+                    .replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+            } else if (language === 'javascript' || language === 'nodejs') {
+                highlighted = code
+                    .replace(/\b(const|let|var|function|if|else|for|while|return|try|catch|async|await|require)\b/g, '<span class="keyword">$1</span>')
+                    .replace(/\b(fetch|console|axios|JSON)\b/g, '<span class="function">$1</span>')
+                    .replace(/(\/\/.*$)/gm, '<span class="comment">$1</span>')
+                    .replace(/('([^'\\]|\\.)*'|"([^"\\]|\\.)*"|`([^`\\]|\\.)*`)/g, '<span class="string">$1</span>')
+                    .replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+            } else if (language === 'go') {
+                highlighted = code
+                    .replace(/\b(package|import|func|if|else|for|range|return|defer|var)\b/g, '<span class="keyword">$1</span>')
+                    .replace(/\b(fmt|http|strings|io)\b/g, '<span class="function">$1</span>')
+                    .replace(/(\/\/.*$)/gm, '<span class="comment">$1</span>')
+                    .replace(/("([^"\\]|\\.)*"|`([^`\\]|\\.)*`)/g, '<span class="string">$1</span>');
+            } else if (language === 'php') {
+                highlighted = code
+                    .replace(/\b(if|else|foreach|function|return|echo|array)\b/g, '<span class="keyword">$1</span>')
+                    .replace(/\b(curl_\w+)\b/g, '<span class="function">$1</span>')
+                    .replace(/(\/\/.*$)/gm, '<span class="comment">$1</span>')
+                    .replace(/('([^'\\]|\\.)*'|"([^"\\]|\\.)*")/g, '<span class="string">$1</span>');
+            } else if (language === 'ruby') {
+                highlighted = code
+                    .replace(/\b(require|def|class|if|else|elsif|end|do|puts)\b/g, '<span class="keyword">$1</span>')
+                    .replace(/\b(Net::HTTP|URI|JSON)\b/g, '<span class="function">$1</span>')
+                    .replace(/(#.*$)/gm, '<span class="comment">$1</span>')
+                    .replace(/('([^'\\]|\\.)*'|"([^"\\]|\\.)*")/g, '<span class="string">$1</span>');
+            } else if (language === 'java') {
+                highlighted = code
+                    .replace(/\b(import|public|class|static|void|new|try|catch|throws)\b/g, '<span class="keyword">$1</span>')
+                    .replace(/\b(HttpClient|HttpRequest|HttpResponse|String|System)\b/g, '<span class="function">$1</span>')
+                    .replace(/(\/\/.*$)/gm, '<span class="comment">$1</span>')
+                    .replace(/("([^"\\]|\\.)*")/g, '<span class="string">$1</span>');
+            } else if (language === 'rust') {
+                highlighted = code
+                    .replace(/\b(use|async|fn|let|mut|await|pub|mod|impl|struct)\b/g, '<span class="keyword">$1</span>')
+                    .replace(/\b(reqwest|println!|Ok|Err|Result|Box)\b/g, '<span class="function">$1</span>')
+                    .replace(/(\/\/.*$)/gm, '<span class="comment">$1</span>')
+                    .replace(/("([^"\\]|\\.)*")/g, '<span class="string">$1</span>');
+            }
+            
+            return highlighted;
+        }
 
         function convertCurl() {
             const curlCommand = curlInput.value.trim();
             
             if (!curlCommand) {
                 output.textContent = '// Your converted code will appear here...';
+                errorMsg.innerHTML = '';
                 return;
             }
 
@@ -871,9 +1102,11 @@ curl -X POST https://api.example.com/users \
                 }
 
                 currentCode = generator.generate(parsed, currentLanguage);
-                output.textContent = currentCode;
+                output.innerHTML = syntaxHighlight(currentCode, currentLanguage);
+                errorMsg.innerHTML = '';
             } catch (error) {
-                output.innerHTML = `<span style="color: #f85149;">Error: ${error.message}</span>`;
+                errorMsg.innerHTML = `<div class="error"><strong>Parse Error:</strong><br>${error.message}</div>`;
+                output.innerHTML = '<span style="color: var(--error-text);">// Fix cURL command errors to generate code</span>';
             }
         }
 
@@ -919,9 +1152,11 @@ curl -X POST https://api.example.com/users \
             const extensions = {
                 'python': '.py',
                 'javascript': '.js',
+                'nodejs': '.js',
                 'go': '.go',
                 'php': '.php',
                 'ruby': '.rb',
+                'java': '.java',
                 'rust': '.rs'
             };
             
@@ -971,6 +1206,15 @@ curl -X POST https://api.example.com/users \
             }
         });
 
+        const clearBtn = document.getElementById('clearBtn');
+        clearBtn.addEventListener('click', () => {
+            curlInput.value = '';
+            output.textContent = '// Your converted code will appear here...';
+            errorMsg.innerHTML = '';
+            localStorage.removeItem('curl-to-code-input');
+            curlInput.focus();
+        });
+
         exampleBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const example = btn.dataset.example;
@@ -1001,7 +1245,7 @@ curl -X POST https://api.example.com/users \
 
         if (urlParams.has('lang')) {
             const lang = urlParams.get('lang');
-            const validLangs = ['python', 'javascript', 'nodejs', 'go', 'php', 'ruby'];
+            const validLangs = ['python', 'javascript', 'nodejs', 'go', 'php', 'ruby', 'java', 'rust'];
             if (validLangs.includes(lang)) {
                 currentLanguage = lang;
                 langBtns.forEach(b => b.classList.remove('active'));
@@ -1024,9 +1268,9 @@ curl -X POST https://api.example.com/users \
                 e.preventDefault();
                 convertCurl();
                 // Visual feedback
-                curlInput.style.borderColor = '#3fb950';
+                curlInput.style.boxShadow = 'inset 0 0 0 2px var(--success)';
                 setTimeout(() => {
-                    curlInput.style.borderColor = '';
+                    curlInput.style.boxShadow = '';
                 }, 300);
             }
             
@@ -1041,6 +1285,18 @@ curl -X POST https://api.example.com/users \
                 e.preventDefault();
                 document.getElementById('copyBtn').click();
             }
+            
+            // Ctrl/Cmd+L to clear
+            if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                e.preventDefault();
+                document.getElementById('clearBtn').click();
+            }
+        });
+
+        // Auto-focus on load
+        window.addEventListener('DOMContentLoaded', () => {
+            curlInput.focus();
+            convertCurl();
         });
 
         convertCurl();
