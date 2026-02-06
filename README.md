@@ -710,17 +710,617 @@ api.get('https://api.example.com/unstable-endpoint')
   .catch(error => console.error('Request failed:', error.message));
 ```
 
+---
+
+## Framework Integration Examples
+
+### Postman Collection to Code Migration
+
+**Scenario:** Your team uses Postman, but you need actual code for integration tests.
+
+```bash
+# 1. Export request as cURL from Postman
+#    Right-click request → Code → cURL
+
+curl --location 'https://api.stripe.com/v1/payment_intents' \
+--header 'Authorization: Bearer sk_test_abc123' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--data-urlencode 'amount=2000' \
+--data-urlencode 'currency=usd' \
+--data-urlencode 'payment_method_types[]=card'
+
+# 2. Paste into curl-to-code, select Python → Get code:
+
+import requests
+
+url = 'https://api.stripe.com/v1/payment_intents'
+headers = {
+    'Authorization': 'Bearer sk_test_abc123',
+    'Content-Type': 'application/x-www-form-urlencoded'
+}
+data = {
+    'amount': '2000',
+    'currency': 'usd',
+    'payment_method_types[]': 'card'
+}
+
+response = requests.post(url, headers=headers, data=data)
+print(response.json())
+
+# 3. Turn into reusable test helper
+# tests/helpers/stripe.py
+import os
+import requests
+from typing import Dict, Any
+
+class StripeTestHelper:
+    BASE_URL = 'https://api.stripe.com/v1'
+    
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or os.getenv('STRIPE_TEST_KEY')
+        self.headers = {
+            'Authorization': f'Bearer {self.api_key}',
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    
+    def create_payment_intent(self, amount: int, currency: str = 'usd') -> Dict[str, Any]:
+        """Create test payment intent"""
+        data = {
+            'amount': str(amount),
+            'currency': currency,
+            'payment_method_types[]': 'card'
+        }
+        
+        response = requests.post(
+            f'{self.BASE_URL}/payment_intents',
+            headers=self.headers,
+            data=data
+        )
+        response.raise_for_status()
+        return response.json()
+
+# 4. Use in pytest tests
+# tests/test_payments.py
+import pytest
+from helpers.stripe import StripeTestHelper
+
+@pytest.fixture
+def stripe():
+    return StripeTestHelper()
+
+def test_create_payment_intent(stripe):
+    intent = stripe.create_payment_intent(amount=5000, currency='usd')
+    
+    assert intent['amount'] == 5000
+    assert intent['currency'] == 'usd'
+    assert intent['status'] == 'requires_payment_method'
+```
+
+---
+
+### API Documentation to SDK Generator
+
+**Scenario:** API docs provide cURL examples, generate client SDK from them.
+
+```bash
+# Example from Twilio docs:
+curl -X POST "https://api.twilio.com/2010-04-01/Accounts/ACXXXXXXX/Messages.json" \
+--data-urlencode "Body=Hello from Python" \
+--data-urlencode "From=+15551234567" \
+--data-urlencode "To=+15559876543" \
+-u ACXXXXXXX:your_auth_token
+
+# Convert to Python → Build SDK wrapper:
+
+# twilio_client.py
+import requests
+from typing import Optional
+from urllib.parse import urljoin
+
+class TwilioClient:
+    """
+    Lightweight Twilio SDK generated from API docs.
+    Alternative to official SDK when you need minimal dependencies.
+    """
+    
+    BASE_URL = 'https://api.twilio.com/2010-04-01/'
+    
+    def __init__(self, account_sid: str, auth_token: str):
+        self.account_sid = account_sid
+        self.auth = (account_sid, auth_token)
+        self.session = requests.Session()
+    
+    def send_sms(
+        self, 
+        to: str, 
+        from_: str, 
+        body: str,
+        media_url: Optional[str] = None
+    ) -> dict:
+        """Send SMS message"""
+        url = urljoin(
+            self.BASE_URL, 
+            f'Accounts/{self.account_sid}/Messages.json'
+        )
+        
+        data = {
+            'To': to,
+            'From': from_,
+            'Body': body,
+        }
+        
+        if media_url:
+            data['MediaUrl'] = media_url
+        
+        response = self.session.post(url, data=data, auth=self.auth)
+        response.raise_for_status()
+        return response.json()
+    
+    def get_message(self, message_sid: str) -> dict:
+        """Get message details"""
+        url = urljoin(
+            self.BASE_URL,
+            f'Accounts/{self.account_sid}/Messages/{message_sid}.json'
+        )
+        
+        response = self.session.get(url, auth=self.auth)
+        response.raise_for_status()
+        return response.json()
+
+# Usage:
+client = TwilioClient(
+    account_sid='ACXXXXXXX',
+    auth_token='your_auth_token'
+)
+
+message = client.send_sms(
+    to='+15559876543',
+    from_='+15551234567',
+    body='Hello from custom SDK!'
+)
+
+print(f"Message SID: {message['sid']}")
+```
+
+---
+
+### Automated Integration Tests from API Specs
+
+**Scenario:** Convert OpenAPI/Swagger cURL examples to test suite.
+
+```javascript
+// 1. API spec provides cURL examples for each endpoint
+// 2. Convert each to JavaScript/TypeScript test
+
+// tests/api/users.test.ts
+import { describe, it, expect, beforeAll } from 'vitest';
+
+describe('User API', () => {
+  let authToken: string;
+  let createdUserId: string;
+  
+  beforeAll(async () => {
+    // Login to get auth token (converted from cURL)
+    const response = await fetch('https://api.example.com/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'test@example.com',
+        password: 'test123'
+      })
+    });
+    const data = await response.json();
+    authToken = data.token;
+  });
+  
+  it('creates a new user', async () => {
+    // Converted from: curl -X POST .../users -H 'Authorization: Bearer ...' -d '{...}'
+    const response = await fetch('https://api.example.com/users', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: 'Test User',
+        email: 'newuser@example.com',
+        role: 'user'
+      })
+    });
+    
+    expect(response.status).toBe(201);
+    
+    const user = await response.json();
+    createdUserId = user.id;
+    
+    expect(user.name).toBe('Test User');
+    expect(user.email).toBe('newuser@example.com');
+  });
+  
+  it('retrieves user by ID', async () => {
+    // Converted from: curl -H 'Authorization: Bearer ...' https://api.../users/123
+    const response = await fetch(
+      `https://api.example.com/users/${createdUserId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      }
+    );
+    
+    expect(response.status).toBe(200);
+    
+    const user = await response.json();
+    expect(user.id).toBe(createdUserId);
+  });
+  
+  it('updates user', async () => {
+    // Converted from: curl -X PATCH .../users/123 -d '{"name":"Updated"}'
+    const response = await fetch(
+      `https://api.example.com/users/${createdUserId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: 'Updated Name'
+        })
+      }
+    );
+    
+    expect(response.status).toBe(200);
+    
+    const user = await response.json();
+    expect(user.name).toBe('Updated Name');
+  });
+  
+  it('deletes user', async () => {
+    // Converted from: curl -X DELETE .../users/123 -H 'Authorization: ...'
+    const response = await fetch(
+      `https://api.example.com/users/${createdUserId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      }
+    );
+    
+    expect(response.status).toBe(204);
+  });
+});
+```
+
+---
+
+### Serverless Function Local Testing
+
+**Scenario:** Test AWS Lambda/Vercel/Netlify functions locally with curl-to-code.
+
+```bash
+# Test Vercel API endpoint locally
+curl -X POST http://localhost:3000/api/webhook \
+  -H 'Content-Type: application/json' \
+  -H 'X-Signature: abc123' \
+  -d '{"event":"user.created","data":{"id":123}}'
+
+# Convert to Node.js test script:
+
+// test-webhook-local.js
+const http = require('http');
+
+function testWebhook() {
+  const data = JSON.stringify({
+    event: 'user.created',
+    data: { id: 123 }
+  });
+
+  const options = {
+    hostname: 'localhost',
+    port: 3000,
+    path: '/api/webhook',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Signature': 'abc123',
+      'Content-Length': data.length
+    }
+  };
+
+  const req = http.request(options, (res) => {
+    console.log(`Status: ${res.statusCode}`);
+    
+    let body = '';
+    res.on('data', (chunk) => body += chunk);
+    res.on('end', () => {
+      console.log('Response:', JSON.parse(body));
+    });
+  });
+
+  req.on('error', (error) => {
+    console.error('Error:', error);
+  });
+
+  req.write(data);
+  req.end();
+}
+
+// Run test
+console.log('Testing webhook locally...');
+testWebhook();
+
+// Enhanced version with multiple test cases:
+
+const testCases = [
+  {
+    name: 'User Created Event',
+    data: { event: 'user.created', data: { id: 123 } }
+  },
+  {
+    name: 'User Deleted Event',
+    data: { event: 'user.deleted', data: { id: 123 } }
+  },
+  {
+    name: 'Invalid Signature',
+    headers: { 'X-Signature': 'invalid' },
+    data: { event: 'user.created', data: { id: 123 } },
+    expectError: true
+  }
+];
+
+async function runTests() {
+  for (const test of testCases) {
+    console.log(`\nTesting: ${test.name}`);
+    await testWebhook(test.data, test.headers);
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+}
+
+runTests();
+```
+
+---
+
+### CI/CD Pipeline API Health Checks
+
+**Scenario:** Generate health check scripts for deployment pipelines.
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy application
+        run: ./deploy.sh
+      
+      - name: Health check - API endpoints
+        run: |
+          # Generated from curl-to-code for each critical endpoint
+          
+          # Check auth endpoint
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST https://api.example.com/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"health@example.com","password":"check123"}')
+          
+          if [ $response -ne 200 ]; then
+            echo "❌ Auth endpoint failed: $response"
+            exit 1
+          fi
+          echo "✅ Auth endpoint healthy"
+          
+          # Check users endpoint
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            https://api.example.com/users \
+            -H 'Authorization: Bearer ${{ secrets.HEALTH_CHECK_TOKEN }}')
+          
+          if [ $response -ne 200 ]; then
+            echo "❌ Users endpoint failed: $response"
+            exit 1
+          fi
+          echo "✅ Users endpoint healthy"
+          
+          # Check database connectivity through API
+          response=$(curl -s https://api.example.com/health/db \
+            | jq -r '.status')
+          
+          if [ "$response" != "healthy" ]; then
+            echo "❌ Database health check failed"
+            exit 1
+          fi
+          echo "✅ Database connection healthy"
+      
+      - name: Notify on failure
+        if: failure()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+            -H 'Content-Type: application/json' \
+            -d '{"text":"🚨 Production deployment health check failed!"}'
+```
+
+---
+
+### Load Testing Script Generation
+
+**Scenario:** Convert API calls to load testing scripts (k6, Artillery, Locust).
+
+```bash
+# Your production API call:
+curl -X POST https://api.example.com/orders \
+  -H 'Authorization: Bearer token123' \
+  -H 'Content-Type: application/json' \
+  -d '{"items":[{"id":1,"qty":2}],"total":59.99}'
+
+# Convert to k6 load test:
+
+// load-test.js
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  stages: [
+    { duration: '30s', target: 20 },  // Ramp up to 20 users
+    { duration: '1m', target: 20 },   // Stay at 20 users
+    { duration: '30s', target: 0 },   // Ramp down
+  ],
+  thresholds: {
+    http_req_duration: ['p(95)<500'], // 95% of requests < 500ms
+    http_req_failed: ['rate<0.01'],   // Error rate < 1%
+  },
+};
+
+export default function () {
+  const url = 'https://api.example.com/orders';
+  const payload = JSON.stringify({
+    items: [{ id: 1, qty: 2 }],
+    total: 59.99
+  });
+  
+  const params = {
+    headers: {
+      'Authorization': 'Bearer token123',
+      'Content-Type': 'application/json',
+    },
+  };
+  
+  const response = http.post(url, payload, params);
+  
+  check(response, {
+    'status is 201': (r) => r.status === 201,
+    'order created': (r) => r.json('id') !== undefined,
+    'response time < 500ms': (r) => r.timings.duration < 500,
+  });
+  
+  sleep(1);
+}
+
+// Run: k6 run load-test.js
+
+// Convert to Locust (Python):
+
+from locust import HttpUser, task, between
+
+class OrderUser(HttpUser):
+    wait_time = between(1, 3)
+    
+    def on_start(self):
+        """Login and get auth token"""
+        response = self.client.post("/auth/login", json={
+            "email": "loadtest@example.com",
+            "password": "test123"
+        })
+        self.token = response.json()['token']
+    
+    @task
+    def create_order(self):
+        """Create order (from converted cURL)"""
+        self.client.post(
+            "/orders",
+            json={
+                "items": [{"id": 1, "qty": 2}],
+                "total": 59.99
+            },
+            headers={
+                "Authorization": f"Bearer {self.token}",
+                "Content-Type": "application/json"
+            }
+        )
+
+# Run: locust -f locustfile.py --host=https://api.example.com
+```
+
+---
+
+### Browser DevTools Network Tab to Code
+
+**Scenario:** Replay production API calls in development.
+
+```bash
+# 1. In Chrome DevTools → Network tab
+# 2. Right-click request → Copy → Copy as cURL
+# 3. Paste in curl-to-code, select your language
+
+# Example: Copying a complex authenticated request
+curl 'https://api.notion.com/v1/pages' \
+  -H 'authorization: Bearer secret_xyz' \
+  -H 'notion-version: 2022-06-28' \
+  -H 'content-type: application/json' \
+  --data-raw '{"parent":{"page_id":"abc"},"properties":{"title":[{"text":{"content":"New Page"}}]}}'
+
+# Convert to TypeScript for integration:
+
+// notion-integration.ts
+import fetch from 'node-fetch';
+
+interface NotionPage {
+  parent: { page_id: string };
+  properties: {
+    title: Array<{ text: { content: string } }>;
+  };
+}
+
+async function createNotionPage(
+  parentPageId: string,
+  title: string,
+  apiKey: string
+): Promise<any> {
+  const response = await fetch('https://api.notion.com/v1/pages', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Notion-Version': '2022-06-28',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      parent: { page_id: parentPageId },
+      properties: {
+        title: [{
+          text: { content: title }
+        }]
+      }
+    })
+  });
+
+  return response.json();
+}
+
+// Usage:
+const page = await createNotionPage(
+  'parent-page-id',
+  'My New Page',
+  process.env.NOTION_API_KEY!
+);
+```
+
+---
+
 ## Supported cURL Options
 
 | Option | Description | Status |
 |--------|-------------|--------|
-| `-X, --request` | HTTP method (GET, POST, PUT, DELETE, etc.) | Supported |
-| `-H, --header` | Custom headers | Supported |
-| `-d, --data` | POST data (JSON, form data) | Supported |
-| `-u, --user` | Basic authentication | Supported |
-| `-b, --cookie` | Cookies | Supported |
-| `-F, --form` | Multipart form data | Supported |
-| URL with query params | Query strings | Supported |
+| `-X, --request` | HTTP method (GET, POST, PUT, DELETE, etc.) | ✅ Supported |
+| `-H, --header` | Custom headers | ✅ Supported |
+| `-d, --data` | POST data (JSON, form data) | ✅ Supported |
+| `-u, --user` | Basic authentication | ✅ Supported |
+| `-b, --cookie` | Cookies | ✅ Supported |
+| `-F, --form` | Multipart form data | ✅ Supported |
+| URL with query params | Query strings | ✅ Supported |
+| `--data-urlencode` | URL-encoded form data | ✅ Supported |
+| `--data-raw` | Raw data body | ✅ Supported |
+| `-L, --location` | Follow redirects | ⚠️ Documented in comments |
+| `--retry` | Retry on failure | ⚠️ Documented in comments |
+| `-o, --output` | Write to file | ⚠️ Documented in comments |
 
 ## Tech Stack
 
