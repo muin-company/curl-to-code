@@ -392,6 +392,324 @@ axios(config)
   .catch(error => console.error(error));
 ```
 
+---
+
+### Example 8: WebSocket connection (HTTP upgrade pattern)
+
+**Input:**
+```bash
+curl -i -N \
+  -H "Connection: Upgrade" \
+  -H "Upgrade: websocket" \
+  -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+  -H "Sec-WebSocket-Version: 13" \
+  https://api.example.com/ws
+```
+
+**Python (using websockets library):**
+```python
+import asyncio
+import websockets
+
+async def connect():
+    uri = "wss://api.example.com/ws"
+    async with websockets.connect(uri) as websocket:
+        # Send message
+        await websocket.send("Hello server!")
+        
+        # Receive message
+        response = await websocket.recv()
+        print(response)
+
+asyncio.run(connect())
+```
+
+**JavaScript (native WebSocket API):**
+```javascript
+const ws = new WebSocket('wss://api.example.com/ws');
+
+ws.onopen = () => {
+  console.log('Connected');
+  ws.send('Hello server!');
+};
+
+ws.onmessage = (event) => {
+  console.log('Received:', event.data);
+};
+
+ws.onerror = (error) => {
+  console.error('WebSocket error:', error);
+};
+
+ws.onclose = () => {
+  console.log('Disconnected');
+};
+```
+
+**Node.js (using ws library):**
+```javascript
+const WebSocket = require('ws');
+
+const ws = new WebSocket('wss://api.example.com/ws');
+
+ws.on('open', function open() {
+  console.log('Connected');
+  ws.send('Hello server!');
+});
+
+ws.on('message', function message(data) {
+  console.log('Received:', data.toString());
+});
+
+ws.on('error', function error(err) {
+  console.error('Error:', err);
+});
+```
+
+---
+
+### Example 9: OAuth 2.0 token exchange
+
+**Input:**
+```bash
+curl -X POST https://oauth.example.com/token \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=authorization_code' \
+  -d 'code=AUTH_CODE_HERE' \
+  -d 'redirect_uri=https://myapp.com/callback' \
+  -d 'client_id=my_client_id' \
+  -d 'client_secret=my_client_secret'
+```
+
+**Python (requests):**
+```python
+import requests
+
+url = 'https://oauth.example.com/token'
+headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+data = {
+    'grant_type': 'authorization_code',
+    'code': 'AUTH_CODE_HERE',
+    'redirect_uri': 'https://myapp.com/callback',
+    'client_id': 'my_client_id',
+    'client_secret': 'my_client_secret'
+}
+
+response = requests.post(url, headers=headers, data=data)
+tokens = response.json()
+
+print(f"Access Token: {tokens['access_token']}")
+print(f"Refresh Token: {tokens['refresh_token']}")
+print(f"Expires in: {tokens['expires_in']} seconds")
+```
+
+**JavaScript (fetch with URLSearchParams):**
+```javascript
+const params = new URLSearchParams({
+  grant_type: 'authorization_code',
+  code: 'AUTH_CODE_HERE',
+  redirect_uri: 'https://myapp.com/callback',
+  client_id: 'my_client_id',
+  client_secret: 'my_client_secret'
+});
+
+fetch('https://oauth.example.com/token', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded'
+  },
+  body: params
+})
+.then(response => response.json())
+.then(tokens => {
+  console.log('Access Token:', tokens.access_token);
+  console.log('Refresh Token:', tokens.refresh_token);
+  localStorage.setItem('access_token', tokens.access_token);
+})
+.catch(error => console.error('OAuth error:', error));
+```
+
+**Go (standard library):**
+```go
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "net/url"
+)
+
+type TokenResponse struct {
+    AccessToken  string `json:"access_token"`
+    RefreshToken string `json:"refresh_token"`
+    ExpiresIn    int    `json:"expires_in"`
+    TokenType    string `json:"token_type"`
+}
+
+func main() {
+    data := url.Values{}
+    data.Set("grant_type", "authorization_code")
+    data.Set("code", "AUTH_CODE_HERE")
+    data.Set("redirect_uri", "https://myapp.com/callback")
+    data.Set("client_id", "my_client_id")
+    data.Set("client_secret", "my_client_secret")
+
+    resp, _ := http.PostForm("https://oauth.example.com/token", data)
+    defer resp.Body.Close()
+
+    var tokens TokenResponse
+    json.NewDecoder(resp.Body).Decode(&tokens)
+    
+    fmt.Printf("Access Token: %s\n", tokens.AccessToken)
+}
+```
+
+---
+
+### Example 10: Retry logic with exponential backoff
+
+**Input:**
+```bash
+curl --retry 5 \
+  --retry-delay 2 \
+  --retry-max-time 60 \
+  -X GET https://api.example.com/unstable-endpoint \
+  -H 'Authorization: Bearer token123'
+```
+
+**Python (with retry decorator):**
+```python
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+def create_session_with_retries():
+    session = requests.Session()
+    
+    # Retry strategy
+    retry = Retry(
+        total=5,
+        backoff_factor=2,  # 1s, 2s, 4s, 8s, 16s
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET", "POST"]
+    )
+    
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    
+    return session
+
+# Usage
+session = create_session_with_retries()
+headers = {'Authorization': 'Bearer token123'}
+
+try:
+    response = session.get(
+        'https://api.example.com/unstable-endpoint',
+        headers=headers,
+        timeout=60
+    )
+    print(response.json())
+except requests.exceptions.RetryError:
+    print("Max retries exceeded")
+except requests.exceptions.Timeout:
+    print("Request timed out")
+```
+
+**JavaScript (with exponential backoff):**
+```javascript
+async function fetchWithRetry(url, options = {}, maxRetries = 5) {
+  let lastError;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      
+      if (response.ok) {
+        return response;
+      }
+      
+      // Retry on server errors (5xx) or rate limit (429)
+      if (response.status >= 500 || response.status === 429) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      // Don't retry client errors (4xx)
+      return response;
+      
+    } catch (error) {
+      lastError = error;
+      
+      if (attempt < maxRetries) {
+        // Exponential backoff: 2^attempt seconds
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw new Error(`Max retries (${maxRetries}) exceeded: ${lastError}`);
+}
+
+// Usage
+fetchWithRetry('https://api.example.com/unstable-endpoint', {
+  headers: {
+    'Authorization': 'Bearer token123'
+  }
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Failed after retries:', error));
+```
+
+**Node.js (using axios with interceptors):**
+```javascript
+const axios = require('axios');
+
+// Create axios instance with retry logic
+const api = axios.create({
+  timeout: 60000,
+  headers: {
+    'Authorization': 'Bearer token123'
+  }
+});
+
+// Retry interceptor
+api.interceptors.response.use(undefined, async (error) => {
+  const { config } = error;
+  
+  if (!config || !config.retry) {
+    config.retry = { count: 0, limit: 5 };
+  }
+  
+  // Check if we should retry
+  const shouldRetry = 
+    config.retry.count < config.retry.limit &&
+    (!error.response || error.response.status >= 500 || error.response.status === 429);
+  
+  if (shouldRetry) {
+    config.retry.count++;
+    
+    // Exponential backoff
+    const delay = Math.pow(2, config.retry.count - 1) * 1000;
+    console.log(`Retry ${config.retry.count}/${config.retry.limit} after ${delay}ms`);
+    
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return api(config);
+  }
+  
+  return Promise.reject(error);
+});
+
+// Usage
+api.get('https://api.example.com/unstable-endpoint')
+  .then(response => console.log(response.data))
+  .catch(error => console.error('Request failed:', error.message));
+```
+
 ## Supported cURL Options
 
 | Option | Description | Status |
