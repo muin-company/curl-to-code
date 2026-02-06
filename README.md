@@ -1,6 +1,6 @@
 # cURL to Code
 
-Convert cURL commands to Python, JavaScript, Go, PHP, Ruby, Node.js instantly.
+Convert cURL commands to Python, JavaScript, Go, PHP, Ruby, Java, Rust, Node.js instantly.
 
 [![Live Demo](https://img.shields.io/badge/demo-live-success)](https://curl2code.com)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -47,7 +47,7 @@ This tool does one thing: turn cURL into code, instantly.
 
 ## Features
 
-- **6 Languages** - Python, JavaScript, Go, PHP, Ruby, Node.js
+- **8 Languages** - Python, JavaScript, Go, PHP, Ruby, Java, Rust, Node.js
 - **Zero Dependencies** - Single HTML file, works offline
 - **Full Parsing** - Headers, data, auth, cookies, methods, query params
 - **One-Click Copy** - Clipboard integration

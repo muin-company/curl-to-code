@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Convert cURL commands to code in Python, JavaScript, Go, PHP, Ruby, and more. Free online tool for developers to transform API requests into production-ready code.">
-    <meta name="keywords" content="curl to code, curl converter, api code generator, curl to python, curl to javascript, curl parser, http request converter">
+    <meta name="description" content="Convert cURL commands to code in Python, JavaScript, Go, PHP, Ruby, Java, Rust, and more. Free online tool for developers to transform API requests into production-ready code.">
+    <meta name="keywords" content="curl to code, curl converter, api code generator, curl to python, curl to javascript, curl to java, curl to rust, curl parser, http request converter">
     <meta name="author" content="Muin">
     <title>cURL to Code - Convert cURL Commands to Code in Any Language</title>
     <link rel="canonical" href="https://curl2code.com">
     
     <!-- Open Graph -->
     <meta property="og:title" content="cURL to Code - Convert cURL Commands Instantly">
-    <meta property="og:description" content="Free tool to convert cURL commands to Python, JavaScript, Go, PHP, Ruby code. Fast, simple, and developer-friendly.">
+    <meta property="og:description" content="Free tool to convert cURL commands to Python, JavaScript, Go, PHP, Ruby, Java, Rust code. Fast, simple, and developer-friendly.">
     <meta property="og:type" content="website">
     
     <!-- Twitter Card -->
@@ -306,7 +306,7 @@
     <header>
         <div class="container">
             <h1>cURL to Code</h1>
-            <p class="subtitle">Convert cURL commands to code in Python, JavaScript, Go, PHP, Ruby, and more</p>
+            <p class="subtitle">Convert cURL commands to code in Python, JavaScript, Go, PHP, Ruby, Java, Rust, and more</p>
         </div>
     </header>
 
@@ -335,6 +335,8 @@ curl -X POST https://api.example.com/users \
                         <button class="lang-btn" data-lang="go">Go</button>
                         <button class="lang-btn" data-lang="php">PHP</button>
                         <button class="lang-btn" data-lang="ruby">Ruby</button>
+                        <button class="lang-btn" data-lang="java">Java</button>
+                        <button class="lang-btn" data-lang="rust">Rust</button>
                     </div>
                 </div>
                 <div class="panel-content">
@@ -702,6 +704,93 @@ curl -X POST https://api.example.com/users \
                 return code;
             }
 
+            generateJava(parsed) {
+                let code = 'import java.net.http.HttpClient;\n';
+                code += 'import java.net.http.HttpRequest;\n';
+                code += 'import java.net.http.HttpResponse;\n';
+                code += 'import java.net.URI;\n\n';
+                code += 'public class Main {\n';
+                code += '    public static void main(String[] args) throws Exception {\n';
+                code += '        HttpClient client = HttpClient.newHttpClient();\n\n';
+                
+                code += '        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()\n';
+                code += `            .uri(URI.create("${parsed.url}"))\n`;
+                code += `            .method("${parsed.method}", `;
+                
+                if (parsed.data) {
+                    code += `HttpRequest.BodyPublishers.ofString("${parsed.data.replace(/"/g, '\\"')}"))\n`;
+                } else {
+                    code += 'HttpRequest.BodyPublishers.noBody())\n';
+                }
+                
+                if (Object.keys(parsed.headers).length > 0) {
+                    for (const [key, value] of Object.entries(parsed.headers)) {
+                        code += `            .header("${key}", "${value}")\n`;
+                    }
+                }
+                
+                code += ';\n\n';
+                
+                if (parsed.auth) {
+                    code += '        // Note: Basic auth requires manual encoding\n';
+                    code += '        String auth = java.util.Base64.getEncoder()\n';
+                    code += `            .encodeToString("${parsed.auth.username}:${parsed.auth.password}".getBytes());\n`;
+                    code += '        requestBuilder.header("Authorization", "Basic " + auth);\n\n';
+                }
+                
+                code += '        HttpRequest request = requestBuilder.build();\n\n';
+                code += '        HttpResponse<String> response = client.send(request,\n';
+                code += '            HttpResponse.BodyHandlers.ofString());\n\n';
+                code += '        System.out.println(response.statusCode());\n';
+                code += '        System.out.println(response.body());\n';
+                code += '    }\n';
+                code += '}';
+                
+                return code;
+            }
+
+            generateRust(parsed) {
+                let code = '// Add to Cargo.toml: reqwest = { version = "0.11", features = ["json"] }\n';
+                code += '// tokio = { version = "1", features = ["full"] }\n\n';
+                code += 'use reqwest;\n';
+                code += 'use std::collections::HashMap;\n\n';
+                code += '#[tokio::main]\n';
+                code += 'async fn main() -> Result<(), Box<dyn std::error::Error>> {\n';
+                code += '    let client = reqwest::Client::new();\n\n';
+                
+                code += `    let mut request = client.${parsed.method.toLowerCase()}("${parsed.url}")\n`;
+                
+                if (Object.keys(parsed.headers).length > 0) {
+                    for (const [key, value] of Object.entries(parsed.headers)) {
+                        code += `        .header("${key}", "${value}")\n`;
+                    }
+                }
+                
+                if (parsed.auth) {
+                    code += `        .basic_auth("${parsed.auth.username}", Some("${parsed.auth.password}"))\n`;
+                }
+                
+                if (parsed.data) {
+                    try {
+                        JSON.parse(parsed.data);
+                        code += `        .json(&serde_json::json!(${parsed.data}))\n`;
+                    } catch {
+                        code += `        .body("${parsed.data.replace(/"/g, '\\"')}")\n`;
+                    }
+                }
+                
+                code += ';\n\n';
+                code += '    let response = request.send().await?;\n';
+                code += '    let status = response.status();\n';
+                code += '    let body = response.text().await?;\n\n';
+                code += '    println!("Status: {}", status);\n';
+                code += '    println!("Body: {}", body);\n\n';
+                code += '    Ok(())\n';
+                code += '}';
+                
+                return code;
+            }
+
             generate(parsed, language) {
                 const generators = {
                     python: () => this.generatePython(parsed),
@@ -709,7 +798,9 @@ curl -X POST https://api.example.com/users \
                     nodejs: () => this.generateNodeJS(parsed),
                     go: () => this.generateGo(parsed),
                     php: () => this.generatePHP(parsed),
-                    ruby: () => this.generateRuby(parsed)
+                    ruby: () => this.generateRuby(parsed),
+                    java: () => this.generateJava(parsed),
+                    rust: () => this.generateRust(parsed)
                 };
 
                 return generators[language]?.() || '// Language not supported yet';
