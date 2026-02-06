@@ -165,7 +165,7 @@
         .copy-btn {
             position: absolute;
             top: 15px;
-            right: 15px;
+            right: 80px;
             padding: 8px 16px;
             background: var(--accent);
             color: white;
@@ -183,6 +183,31 @@
 
         .copy-btn.copied {
             background: var(--success);
+        }
+
+        .share-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .share-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+        }
+
+        .share-btn.shared {
+            background: var(--success);
+            border-color: var(--success);
         }
 
         .examples {
@@ -315,6 +340,7 @@ curl -X POST https://api.example.com/users \
                 <div class="panel-content">
                     <div class="output-area">
                         <button class="copy-btn" id="copyBtn">Copy</button>
+                        <button class="share-btn" id="shareBtn">Share</button>
                         <pre class="output-code" id="output">// Your converted code will appear here...</pre>
                     </div>
                 </div>
@@ -724,14 +750,19 @@ curl -X POST https://api.example.com/users \
             }
         }
 
-        // Event listeners
-        curlInput.addEventListener('input', convertCurl);
+        // Event listeners with localStorage
+        curlInput.addEventListener('input', () => {
+            convertCurl();
+            localStorage.setItem('curl-to-code-input', curlInput.value);
+            localStorage.setItem('curl-to-code-lang', currentLanguage);
+        });
 
         langBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 langBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 currentLanguage = btn.dataset.lang;
+                localStorage.setItem('curl-to-code-lang', currentLanguage);
                 convertCurl();
             });
         });
@@ -750,6 +781,29 @@ curl -X POST https://api.example.com/users \
             }
         });
 
+        const shareBtn = document.getElementById('shareBtn');
+        shareBtn.addEventListener('click', async () => {
+            const curl = curlInput.value.trim();
+            if (!curl) {
+                alert('Please enter a cURL command first!');
+                return;
+            }
+            try {
+                const url = new URL(window.location.href.split('?')[0]);
+                url.searchParams.set('curl', encodeURIComponent(curl));
+                url.searchParams.set('lang', currentLanguage);
+                await navigator.clipboard.writeText(url.toString());
+                shareBtn.textContent = 'Link Copied!';
+                shareBtn.classList.add('shared');
+                setTimeout(() => {
+                    shareBtn.textContent = 'Share';
+                    shareBtn.classList.remove('shared');
+                }, 2000);
+            } catch (error) {
+                console.error('Failed to share:', error);
+            }
+        });
+
         exampleBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const example = btn.dataset.example;
@@ -759,8 +813,43 @@ curl -X POST https://api.example.com/users \
             });
         });
 
-        // Load default example
-        curlInput.value = examples.post;
+        // URL sharing support
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('curl')) {
+            try {
+                curlInput.value = decodeURIComponent(urlParams.get('curl'));
+            } catch (e) {
+                console.error('Failed to decode URL parameter');
+            }
+        } else {
+            // Load from localStorage
+            const savedInput = localStorage.getItem('curl-to-code-input');
+            if (savedInput) {
+                curlInput.value = savedInput;
+            } else {
+                // Load default example only if no saved data
+                curlInput.value = examples.post;
+            }
+        }
+
+        if (urlParams.has('lang')) {
+            const lang = urlParams.get('lang');
+            const validLangs = ['python', 'javascript', 'nodejs', 'go', 'php', 'ruby'];
+            if (validLangs.includes(lang)) {
+                currentLanguage = lang;
+                langBtns.forEach(b => b.classList.remove('active'));
+                document.querySelector(`[data-lang="${lang}"]`)?.classList.add('active');
+            }
+        } else {
+            // Load language preference from localStorage
+            const savedLang = localStorage.getItem('curl-to-code-lang');
+            if (savedLang) {
+                currentLanguage = savedLang;
+                langBtns.forEach(b => b.classList.remove('active'));
+                document.querySelector(`[data-lang="${savedLang}"]`)?.classList.add('active');
+            }
+        }
+
         convertCurl();
     </script>
 </body>
