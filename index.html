@@ -364,8 +364,8 @@ curl -X POST https://api.example.com/users \
                 </div>
                 <div class="panel-content">
                     <div class="output-area">
-                        <button class="copy-btn" id="copyBtn">Copy</button>
-                        <button class="download-btn" id="downloadBtn">Download</button>
+                        <button class="copy-btn" id="copyBtn" title="Copy code (Ctrl+Shift+C)">Copy</button>
+                        <button class="download-btn" id="downloadBtn" title="Download file (Ctrl+S)">Download</button>
                         <button class="share-btn" id="shareBtn">Share</button>
                         <pre class="output-code" id="output">// Your converted code will appear here...</pre>
                     </div>
@@ -406,6 +406,11 @@ curl -X POST https://api.example.com/users \
 
     <footer>
         <p>Built with ❤️ for developers | <a href="https://github.com/yourusername/curl-to-code" target="_blank">GitHub</a> | Free & Open Source</p>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">
+            💡 Keyboard shortcuts: <kbd style="padding: 2px 6px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px;">Ctrl+Enter</kbd> to convert | 
+            <kbd style="padding: 2px 6px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px;">Ctrl+S</kbd> to download | 
+            <kbd style="padding: 2px 6px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px;">Ctrl+Shift+C</kbd> to copy
+        </p>
     </footer>
 
     <script>
@@ -452,14 +457,21 @@ curl -X POST https://api.example.com/users \
                     .replace(/\s+/g, ' ');
 
                 // Extract URL (first non-flag argument or after explicit URL flags)
-                const urlMatch = cmd.match(/(?:^|\s)(?:-L\s+)?(?:--url\s+)?(['"]?)([^\s'"]+)\1/);
+                // Match URLs more specifically - must start with http/https or be quoted
+                const urlMatch = cmd.match(/(?:--url\s+)?(['"]?)(https?:\/\/[^\s'"]+)\1/) || 
+                                cmd.match(/\s(['"])(https?:\/\/[^'"]+)\1/) ||
+                                cmd.match(/\s(https?:\/\/\S+)/);
                 if (urlMatch) {
-                    result.url = urlMatch[2];
+                    result.url = urlMatch[2] || urlMatch[1];
                     // Parse query parameters from URL
-                    const urlObj = new URL(result.url, 'https://example.com');
-                    urlObj.searchParams.forEach((value, key) => {
-                        result.query[key] = value;
-                    });
+                    try {
+                        const urlObj = new URL(result.url);
+                        urlObj.searchParams.forEach((value, key) => {
+                            result.query[key] = value;
+                        });
+                    } catch (e) {
+                        // Invalid URL, ignore query params
+                    }
                 }
 
                 // Extract method
@@ -1004,6 +1016,32 @@ curl -X POST https://api.example.com/users \
                 document.querySelector(`[data-lang="${savedLang}"]`)?.classList.add('active');
             }
         }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd+Enter to convert
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                convertCurl();
+                // Visual feedback
+                curlInput.style.borderColor = '#3fb950';
+                setTimeout(() => {
+                    curlInput.style.borderColor = '';
+                }, 300);
+            }
+            
+            // Ctrl/Cmd+S to download
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                document.getElementById('downloadBtn').click();
+            }
+            
+            // Ctrl/Cmd+Shift+C to copy
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                document.getElementById('copyBtn').click();
+            }
+        });
 
         convertCurl();
     </script>
